@@ -1,7 +1,7 @@
 (function(exports,module) {
 	"use strict";
-
-	var State  = function() {
+	var _ = require('lodash'),
+		State  = function() {
 		var mapLegend = {
 			spawnPoint: {
 				key: new RegExp('X[1-4]{1}',"g"),
@@ -89,12 +89,19 @@
 		};
 
 		this.findIndicies = function(what,where,search) {
-			if(search === undefined) {
-				return this.getIndicesOf(mapLegend[what].key,where);
-			}
-			var indices = this.getIndicesOf(mapLegend[what].key,where),
+			var key = null,
+				indices = [],
+				self = this,
 				result = [];
-			var self = this;
+			if(typeof what === "string") {
+				key = mapLegend[what].key;
+			} else {
+				key = what;
+			}
+			if(search === undefined) {
+				return this.getIndicesOf(key,where);
+			}
+			indices = this.getIndicesOf(key,where);
 			indices.forEach(function(index){
 				var tile = self.getPair(index),
 				tileData = null;
@@ -144,6 +151,22 @@
 			return this.find('mine', this.getBoard().tiles,search);
 		};
 
+		this.findImpassable = function() {
+			var tileName = null,
+				tile = null,
+				walls = [];
+			for(tileName in mapLegend) {
+				if(mapLegend.hasOwnProperty(tileName)) {					
+					tile = mapLegend[tileName];
+					if(!tile.pass) {
+						var additional = this.find(tileName, this.getBoard().tiles);
+						walls = walls.concat(additional);	
+					}
+				}
+			}
+			return walls;
+		};
+
 		this.getState = function() {
 			return this.state;
 		};
@@ -163,10 +186,27 @@
 		this.findOpenMines = function() {
 			return this.findMines(mapLegend.mine.emptyData);
 		};
+
 		this.updateState = function(state) {
 			this.previousState = this.state;
 			this.state = state;
 		};
+
+		this.getEnemies = function() {
+			return this.getPlayers().filter(function(player){
+				return player.id !== this.getHero().id;
+			});
+		};
+
+		this.getEnemiesPositions = function() {
+			return this.getEnemies().map(function(enemy){
+				return enemy.pos;
+			});
+		};
+
+		this.getPlayers = function() {
+			return this.getGame().heroes;
+		}
 		//state.game.hero.index = find
 		//
 	
