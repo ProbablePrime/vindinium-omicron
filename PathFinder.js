@@ -11,7 +11,7 @@
 			var walls = state.findImpassable();
 			walls.forEach(function(wall){
 				//XXX Our coord system sometimes durps and returns huge numbers
-				if(wall.y > state.getBoardWidth() || wall.x > state.getBoardHeight()) {
+				if(this.grid.isInside(wall.y,wall.x)) {
 					//XXX Vindiniums coordinate system
 					this.grid.setWalkableAt(wall.y, wall.x, false);
 				}
