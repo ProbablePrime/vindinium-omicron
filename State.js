@@ -8,19 +8,22 @@
 				dataKey: new RegExp('[1-4]{1}'),
 				pass:true,
 				interact:false,
-				value:-1
+				value:-1,
+				cost:2
 			},
 			space: {
 				key:new RegExp('  ',"g"),
 				pass:true,
 				interact:false,
-				value:1
+				value:1,
+				cost:0
 			},
 			barrier: {
 				key: new RegExp('##',"g"),
 				pass:false,
 				interact:false,
-				value:0
+				value:0,
+				cost:1
 			},
 			hero: {
 				key: new RegExp("@[1-4]{1}","g"),
@@ -28,12 +31,14 @@
 				interact:true,
 				dataKey: new RegExp("[1-4]{1}"),
 				value:2,
+				cost:4,
 			},
 			tavern: {
 				key: new RegExp('\\[\\]',"g"),
 				pass:false,
 				interact:true,
-				value:3
+				value:3,
+				cost:0
 			},
 			mine: {
 				key: new RegExp("\\$\\-|[1-4]{1}","g"),
@@ -41,7 +46,8 @@
 				interact:true,
 				dataKey: new RegExp("-|[1-4]{1}") ,
 				value:4,
-				emptyData:'-'
+				emptyData:'-',
+				cost:1
 			}
 		},		
 		charactersPerSpace = 2;
@@ -66,7 +72,7 @@
 		};
 
 		this.getSplitBoard = function() {
-			this.getBoard().match(this.getBoardSplitterRegex());
+			return this.getBoard().tiles.match(this.getBoardSplitterRegex());
 		};
 
 		this.getPair = function(index) {
@@ -136,7 +142,7 @@
 
 		this.indexToPos = function(index) {
 			var x = parseInt(index/this.getBoardWidth(),10),
-		 		y = Math.ceil(index%this.getBoardWidth())/2;
+		 		y = parseInt(Math.ceil(index%this.getBoardWidth())/2,10);
 			return {
 				x:x,
 				y:y
@@ -206,9 +212,104 @@
 
 		this.getPlayers = function() {
 			return this.getGame().heroes;
+		};
+		
+		this.getNeighboursForPoint = function(position) {
+			if(typeof position !== "object") {
+				throw new TypeError("Please only use position objects for getNeighbours");
+			}
+			var res = [];
+			if((position.y - 1) >= 0) {
+				res.push({
+					x:position.x,
+					y:position.y - 1
+				});
+			}
+			if((position.y + 1) > this.getBoardWidth()) {
+				res.push({
+					x:position.x,
+					y:position.y + 1
+				});
+			}
+			if((position.x - 1) >= 0) {
+				res.push({
+					x:position.x - 1,
+					y:position.y
+				});
+			}
+			if((position.x + 1) > this.getBoardHeight()) {
+				res.push({
+					x:position.x + 1,
+					y:position.y
+				});
+			}
+			return res;
+		};
+
+		this.getCostForPoint = function(position) {
+			if(typeof position !== "object") {
+				throw new TypeError("Please only use position objects for getNeighbours");
+			}
+			return this.getTypeByPos(position).cost;
+			//var costs = this.getNeighboursForPoint(position).map()
+		};
+
+		this.getNeighbouringCosts = function(position) {
+			var neighbours = this.getNeighbours(position);
+			neighbours.push(position);
+			return neighbours.map(this.getCostForPoint).reduce(function(a,b){
+				return a + b;
+			});
+		};
+
+		this.getDistanceBetween = function(a,b) {
+			var distance = {
+				x: Math.abs(a.x - b.x),
+				y: Math.abs(a.y - b.y),
+			};
+			return Math.sqrt((Math.pow(distance.x,2) + Math.pow(distance.y,2)));
+		};
+
+		this.findClosest = function(from,tiles) {
+			var match = tiles[0];
+			match.distance = this.getDistanceBetween(from,match);
+			tiles.forEach(function(tile){
+				if(tile.distance === null) {
+					tile.distance = this.getDistanceBetween(from,tile);
+				}
+				if(tile.distance < match.distance) {
+					match = tile;
+				}
+			},this);
+			return match;
+		};
+
+		this.getTypeByIndex = function(index) {
+			if(typeof index !== "number") {
+				throw new TypeError("Please only use indexes for getTypeByIndex");
+			}
+			var pair = this.getPair(index),
+				tileName = null,
+				tile = null;
+			for(tileName in mapLegend) {
+				if(mapLegend.hasOwnProperty(tileName)) {
+					tile = mapLegend[tileName];
+					if(pair.search(tile.key) !== -1){
+						return tileName;
+					}
+				}
+			}
+		};
+
+		this.getTypeByPos = function(pos) {
+			if(typeof pos !== 'object') {
+				throw new TypeError("getTypeByPos takes a position object");
+			}
+			return this.getTypeByIndex(this.posToIndex(post));
 		}
-		//state.game.hero.index = find
-		//
+
+
+
 	
 		return this;
 	};
