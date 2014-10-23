@@ -133,6 +133,7 @@
 		this.getBoard = function() {
 			return this.state.game.board;
 		};
+		
 		/*
 			For some reason x and y are reversed in the maths we get from the server :S
 		 */
@@ -191,6 +192,18 @@
 
 		this.findOpenMines = function() {
 			return this.findMines(mapLegend.mine.emptyData);
+		};
+
+		this.findClosestOpenMine = function() {
+			return this.findClosest(this.getHero().pos,this.findOpenMines());
+		};
+
+		this.findClosestTavern = function() {
+			return this.findClosest(this.getHero().pos,this.findTaverns());
+		};
+
+		this.findEnemyMines = function() {
+			return _.difference(this.findMines(),this.findOwnedMines());
 		};
 
 		this.updateState = function(state) {
