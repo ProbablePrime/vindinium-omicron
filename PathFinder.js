@@ -11,7 +11,7 @@
 			var walls = state.findImpassable();
 			walls.forEach(function(wall){
 				//XXX Our coord system sometimes durps and returns huge numbers
-				if(this.grid.isInside(wall.y,wall.x)) {
+				if(wall.y > state.getBoardWidth() || wall.x > state.getBoardHeight()) {
 					//XXX Vindiniums coordinate system
 					this.grid.setWalkableAt(wall.y, wall.x, false);
 				}
@@ -32,18 +32,24 @@
 
 		this.firstStepTo = function(source,sink) {
 			var path = this.pathTo(source,sink);
-			if(path[0][0] === source.y &&  path[0][1] === source.x) {
-				return path[1];
+			if(path.length > 0) {
+				if(path[0][0] === source.y &&  path[0][1] === source.x) {
+					return path[1];
+				}
+				return path[0];
 			}
-			return path[0];
+			return null;
 		};
 
 		this.firstDirectionTo = function(source,sink) {
 			var path = this.directionTo(source,sink);
-			if(path[0] === "STAY") {
-				return path[1];
+			if(path.length > 0) {
+				if(path[0] === "STAY") {
+					return path[1];
+				}
+				return path[0];	
 			}
-			return path[0];	
+			return null;
 		}
 
 		this.convertToDirection = function(current,previous) {
