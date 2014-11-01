@@ -1,1 +1,7 @@
-{"key":"***REMOVED***"}
+{
+	"key":"***REMOVED***",
+	"brain":"default",
+	"mode":"training",
+	"trainingTurns":200,
+	"possibleModes":["arena","training"]
+}

@@ -1,0 +1,3 @@
+[submodule "machinejs"]
+	path = machinejs
+	url = git@github.com:rfox90/machinejs.git

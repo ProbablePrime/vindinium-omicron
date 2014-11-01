@@ -209,7 +209,13 @@
 		this.updateState = function(state) {
 			this.previousState = this.state;
 			this.state = state;
+
+			return this;
 		};
+
+		this.update = function(state) {
+			return this.updateState();
+		}
 
 		this.getEnemies = function() {
 			return this.getPlayers().filter(function(player){

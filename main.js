@@ -1,29 +1,30 @@
+var vindinium = require('vindinium-client');
+
 var State = require('./State');
+var Director = require('./Director');
 
-var test = new State();
+var parsedState = new State();
+var director = new Director('default');
 
-var testState = require('./testState');
-var Finder = require('./PathFinder');
+var config = require('./config.json');
 
-var finder = new Finder();
+var handeler = function(state,cb) {
+	"use strict";
+	director.update(parsedState.update(state));
+	var action = director.tick();
+	if(action !== undefined && action !== null) {
+		cb(null,action);
+	} else {
+		//Suicide but meh
+		cb(null,'stay');
+	}
+};
 
-test.updateState(testState);
-finder.update(test);
-// console.log('Taverns:');
-// console.log(test.findTaverns());
-// console.log('Mines:');
-// console.log(test.findMines());
-// console.log('Mines I Own:');
-// console.log(test.findOwnedMines());
-// console.log('Walls');
-// console.log(test.findImpassable());
-console.log('Im thirsty lets find a path to a tavern');
-var tavern = test.findTaverns()[0];
-console.log('I am at: ');
-console.log(test.getHero().pos);
-console.log('The tavern is at: ');
-console.log(tavern);
-console.log('I think out next step is ');
-console.log(finder.firstDirectionTo(test.getHero().pos,tavern));
-
+vindinium({
+    key: config.key,
+    bot: handeler,
+    mode: config.mode,  // or 'training'
+}, function(err, lastState) {
+    /* ... */
+});
 
