@@ -8,7 +8,7 @@
 		this.actor = new Actor();
 		//node allows us to just load in json files which is awesome
 		behavioursTree = require('./brains/' + brain + '.json');
-		this.buildBehaviours(behavioursTree);
+		
 		
 		/**
 		 * Updates the local reference state to the new turn and passes this to the Actor
@@ -19,17 +19,20 @@
 			this.actor.setState(state);
 		};
 
-		
-
 		this.tick = function() {
-			this.actor.brain.tick();
+			while(!this.action.hasAction()) {
+				this.actor.brain.tick();
+			}
 			console.log(this.actor.state.identifier);
-			return this.actor.getAction();
+			return this.actor.getAction(true);
 		};
 
 		this.buildBehaviours = function(jsonBehaviours) {
-			this.actor.brain = machine.generateTree(jsonTree,this.actor,Actor.states);
+			this.actor.brain = machine.generateTree(jsonBehaviours,this.actor,Actor.states);
 		};
+
+		this.buildBehaviours(behavioursTree);
+		return this;
 	};
 	exports = module.exports = Director;	
 }(module,module.exports)); 
