@@ -82,6 +82,10 @@
 			return this.getBoard().tiles.substring(index,(index + (charactersPerSpace/2)) + 1);
 		};
 
+		this.getPairByPos = function(pos) {
+			return this.getPair(this.posToIndex(pos));
+		};
+
 		this.getIndicesOf = function(search, source) {
     		var indices = [],
     			result = null;
@@ -138,6 +142,10 @@
 			For some reason x and y are reversed in the maths we get from the server :S
 		 */
 		this.posToIndex = function(x,y) {
+			if(typeof x === "object" && y === undefined) {
+				y = x.y;
+				x = x.x;
+			}
 			return (x * (this.getBoardWidth())) + (y*2);
 		};
 
@@ -215,7 +223,7 @@
 
 		this.update = function(state) {
 			return this.updateState();
-		}
+		};
 
 		this.getEnemies = function() {
 			return this.getPlayers().filter(function(player){
@@ -232,38 +240,47 @@
 		this.getPlayers = function() {
 			return this.getGame().heroes;
 		};
-		
+
+			
+		this.buildNeighbour = function(x,y) {
+			var obj = {};
+			obj.x = x;
+			obj.y = y;
+			obj.type = this.getTypeByPos(obj);
+			obj.tile = this.getPairByPos(obj);
+			return obj;
+		};
+
 		this.getNeighboursForPoint = function(position) {
 			if(typeof position !== "object") {
 				throw new TypeError("Please only use position objects for getNeighbours");
 			}
-			var res = [];
+			var res = {};
 			if((position.y - 1) >= 0) {
-				res.push({
-					x:position.x,
-					y:position.y - 1
-				});
+				res.west = this.buildNeighbour(position.x, position.y -1);
+			} else {
+				res.west = null;
 			}
-			if((position.y + 1) > this.getBoardWidth()) {
-				res.push({
-					x:position.x,
-					y:position.y + 1
-				});
+
+			if((position.y + 1) <= this.getBoardWidth()) {
+				res.east = this.buildNeighbour(position.x, position.y + 1);
+			} else {
+				res.east = null;
 			}
+
 			if((position.x - 1) >= 0) {
-				res.push({
-					x:position.x - 1,
-					y:position.y
-				});
+				res.north = this.buildNeighbour(position.x - 1, position.y);
+			} else {
+				res.north = null;
 			}
-			if((position.x + 1) > this.getBoardHeight()) {
-				res.push({
-					x:position.x + 1,
-					y:position.y
-				});
+			if((position.x + 1) <= this.getBoardHeight()) {
+				res.south = this.buildNeighbour(position.x + 1, position.y);
+			} else {
+				res.south = null;
 			}
 			return res;
 		};
+
 
 		this.getCostForPoint = function(position) {
 			if(typeof position !== "object") {
@@ -274,11 +291,19 @@
 		};
 
 		this.getNeighbouringCosts = function(position) {
-			var neighbours = this.getNeighbours(position);
-			neighbours.push(position);
-			return neighbours.map(this.getCostForPoint).reduce(function(a,b){
-				return a + b;
-			});
+			var cost = 0,
+				neighbours = this.getNeighbours(position),
+				neighbour = null;
+			
+			cost += this.getCostForPoint(position);
+			for(neighbour in neighbours) {
+				if(neighbours.hasOwnProperty(neighbour)) {
+					if(neighbours[neighbour] !== null) {
+						cost += this.getCostForPoint(neighbours[neighbour]);
+					}
+				}
+			}
+			return cost;
 		};
 
 		this.getDistanceBetween = function(a,b) {
@@ -304,7 +329,7 @@
 		};
 
 		this.getTypeByIndex = function(index) {
-			if(typeof index !== "number") {
+			if(typeof index !== "number" || isNaN(index)) {
 				throw new TypeError("Please only use indexes for getTypeByIndex");
 			}
 			var pair = this.getPair(index),
@@ -324,8 +349,8 @@
 			if(typeof pos !== 'object') {
 				throw new TypeError("getTypeByPos takes a position object");
 			}
-			return this.getTypeByIndex(this.posToIndex(post));
-		}
+			return this.getTypeByIndex(this.posToIndex(pos));
+		};
 
 
 
