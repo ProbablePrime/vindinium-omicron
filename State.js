@@ -241,6 +241,22 @@
 			return this.getGame().heroes;
 		};
 
+		this.getAttackValue = function() {
+			return 20;
+		};
+
+		this.getHeroByPos = function(pos) {
+			var players = this.getPlayers(),
+			ret = players.find(
+				function(player)	{
+					return (player.pos.x === pos.x && player.pos.y === pos.y);
+				}
+			);
+			if(ret === undefined) {
+				return null;
+			}
+			return ret;
+		};
 			
 		this.buildNeighbour = function(x,y) {
 			var obj = {};
@@ -248,6 +264,11 @@
 			obj.y = y;
 			obj.type = this.getTypeByPos(obj);
 			obj.tile = this.getPairByPos(obj);
+			if(obj.type === 'hero') {
+				obj.hero = this.getHeroByPos(obj);
+			} else {
+				obj.hero = null;
+			}
 			return obj;
 		};
 

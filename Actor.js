@@ -73,8 +73,65 @@
 
 			return false;
 		},
-		shouldAttack: function() {
+		/**
+		 * Workout if we are in a suitable position and state to fight
+		 * @return {boolean} decision
+		 */
+		shouldFight: function() {
+			var neighbours = this.state.getNeighboursForPoint(this.state.getHero().pos),
+				neigbour = null,
+				neigbourObj = null,
+				predictedDamage = 0,
+				worthIt = false;
+			for (neigbour in neighbours) {
+				if(neighbours.hasOwnProperty(neigbour)) {
+					neigbourObj = neighbours[neigbour];
+					if(neigbourObj.type === 'hero') {
+						predictedDamage = predictedDamage + this.state.getAttackValue();
+					}
+					if(predictedDamage >= this.state.getHero().health) {
+						console.log('We are going to die :(');
+						return false;
+					}
+					if(predictedDamage >= this.state.getHero().health/2) {
+						console.log('Dumb fight we should run');
+						return false;
+					}
+					if(this.state.getAttackValue() >= neigbourObj.hero.health) {
+						console.log(neigbourObj.hero.name + ' will most likely die at our hands');
+						worthIt = true;
+					}
+				}
+			}
+			return worthIt;
+		},
+		fight: function() {
+			this.setAction('STAY');
+			return true;
+		},
 
+		shouldRun: function() {
+			return !shouldFight();
+		},
+		run: function() {
+			
+		}
+
+		inCombat: function() {
+			var neighbours = this.state.getNeighboursForPoint(this.state.getHero().pos),
+				neigbour = null,
+				neigbourObj = null;
+			for (neigbour in neighbours) {
+				if(neighbours.hasOwnProperty(neigbour)) {
+					neigbourObj = neighbours[neigbour];
+					if(neigbourObj.type === 'hero') {
+						return true;
+					}
+				}
+			}
+			return false;
+		},
+		combat: function() {
 			return true;
 		},
 		canLoot: function() {
