@@ -81,7 +81,7 @@
 					console.log('we could do with a heal');
 					return true;
 				}
-				if ( closestTavern.distance === 1 && this.state.getHeroHealthPercentage() < 1.0 ) {
+				if ( closestTavern.distance === 1 && this.state.getHeroHealthPercentage() < 0.7 ) {
 					console.log('we are close enough and not max health so lets heal');
 					return true;
 				}
