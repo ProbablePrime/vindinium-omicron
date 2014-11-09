@@ -3,5 +3,6 @@
 	"brain":"default",
 	"mode":"training",
 	"trainingTurns":1200,
-	"possibleModes":["arena","training"]
+	"possibleModes":["arena","training"],
+	"distanceHeuristic": "octile"
 }

@@ -1,7 +1,9 @@
 (function(exports,module) {
 	"use strict";
 	var _ = require('lodash'),
-		State  = function() {
+		heuristics = require('./Heuristics.js'),
+		State  = function(config) {
+		this.config = config;
 		var mapLegend = {
 			spawnPoint: {
 				key: new RegExp('X[1-4]{1}',"g"),
@@ -286,7 +288,9 @@
 		/**
 		 * HEROES SHIZ
 		 */
-
+		this.getHeroes = function() {
+			return this.getGame().heroes;
+		}
 		this.getHero = function(id) {
 			if(id === undefined || id === this.getState().hero.id ) {
 				return this.getState().hero;
@@ -402,7 +406,13 @@
 				x: Math.abs(a.x - b.x),
 				y: Math.abs(a.y - b.y),
 			};
-			return Math.sqrt((Math.pow(distance.x,2) + Math.pow(distance.y,2)));
+			if(config.distanceHeuristic === undefined) {
+				config.distanceHeuristic = "manhattan";
+			}
+			if(typeof heuristics[config.distanceHeuristic] === "function" ) {
+				return heuristics[config.distanceHeuristic](distance.x,distance.y);
+			}
+			return distance.x + distance.y;
 		};
 
 		this.findClosest = function(from,tiles) {
