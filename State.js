@@ -150,7 +150,7 @@
 				y = x.y;
 				x = x.x;
 			}
-			return (x * (this.getBoardWidth())) + (y*2);
+			return (x * (this.getBoardWidth()*2)) + (y*2);
 		};
 
 		this.indexToPos = function(index) {
@@ -184,6 +184,8 @@
 				mine.owned = (mineData == this.getHero().id);
 				mine.neutral = (mineData == mapLegend.mine.emptyData);
 				mine.enemy = (!mine.owned && !mine.neutral);
+			} else {
+				console.warn('mine data is undefined');
 			}
 			return mine;
 		};
