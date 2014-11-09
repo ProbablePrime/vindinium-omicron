@@ -1,3 +1,5 @@
+require('es6-shim');
+
 var vindinium = require('vindinium-client');
 
 var State = require('./State');
