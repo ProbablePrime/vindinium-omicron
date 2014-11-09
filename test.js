@@ -11,24 +11,27 @@ var finder = new Finder();
 
 test.updateState(testState);
 finder.update(test);
-// console.log('Taverns:');
-// console.log(test.findTaverns());
-// console.log('Mines:');
-// console.log(test.findMines());
-// console.log('Mines I Own:');
-// console.log(test.findOwnedMines());
-// console.log('Walls');
-// console.log(test.findImpassable());
-console.log('Im thirsty lets find a path to a tavern');
-var tavern = test.findClosest(test.getHero().pos,test.findMines());
-console.log('I am at: ');
-console.log(test.getHero().pos);
-console.log('The tavern is at: ');
-console.log(tavern);
-console.log(test.findMines());
-console.log('I think out next step is ');
-console.log(finder.firstDirectionTo(test.getHero().pos,tavern));
 
 console.log(test.getSplitBoard());
+
+//console.log(test.findImpassable());
+
+// console.log(test.getHero().id);
+
+// console.log(test.findClosest(test.getHero().pos,test.findEnemyMines()));
+
+// console.log(test.getPair(test.posToIndex({x:5,y:6})));
+// // 
+//console.log('Im thirsty lets find a path to a tavern');
+var tavern = test.findClosest(test.getHero().pos,test.findTaverns());
+//console.log('I am at: ');
+console.log(test.getHero().pos);
+//console.log('The tavern is at: ');
+console.log(tavern);
+//console.log('I think out next step is ');
+
+console.log(finder.directionTo(test.getHero().pos,{x:6,y:8}));
+
+
 
 

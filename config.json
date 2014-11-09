@@ -2,6 +2,6 @@
 	"key":"***REMOVED***",
 	"brain":"default",
 	"mode":"training",
-	"trainingTurns":200,
+	"trainingTurns":1200,
 	"possibleModes":["arena","training"]
 }

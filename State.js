@@ -9,21 +9,21 @@
 				pass:true,
 				interact:false,
 				value:-1,
-				cost:2
+				pathingCost:9
 			},
 			space: {
 				key:new RegExp('  ',"g"),
 				pass:true,
 				interact:false,
 				value:1,
-				cost:0
+				pathingCost:0
 			},
 			barrier: {
 				key: new RegExp('##',"g"),
 				pass:false,
 				interact:false,
 				value:0,
-				cost:1
+				pathingCost:1
 			},
 			hero: {
 				key: new RegExp("@[1-4]{1}","g"),
@@ -31,23 +31,28 @@
 				interact:true,
 				dataKey: new RegExp("[1-4]{1}"),
 				value:2,
-				cost:4,
+				pathingCost:4,
+				attackValue:20,
+				maxHealth:100
 			},
 			tavern: {
-				key: new RegExp('\\[\\]',"g"),
+				key: new RegExp('(\\[\\])',"g"),
 				pass:false,
 				interact:true,
 				value:3,
-				cost:0
+				pathingCost:0,
+				goldCost:2,
+				healAmount:50
 			},
 			mine: {
-				key: new RegExp("\\$\\-|[1-4]{1}","g"),
+				key: new RegExp("\\$(\\-|[1-4]{1})","g"),
 				pass:false,
 				interact:true,
 				dataKey: new RegExp("-|[1-4]{1}") ,
 				value:4,
 				emptyData:'-',
-				cost:1
+				pathingCost:1,
+				combatCost:20
 			}
 		},		
 		charactersPerSpace = 2;
@@ -55,16 +60,18 @@
 		this.state = null;
 		this.previousState = null;
 
+		
+
 		this.getPercentageDone = function() {
 			return (this.getState().game.turn/this.state.game.maxTurns) * 100;
 		};
 
 		this.getBoardWidth = function() {
-			return (this.getBoard().size) * charactersPerSpace;
+			return (this.getBoard().size);
 		};
 
 		this.getBoardSplitterRegex = function() {
-			return new RegExp(".{1,"+this.getBoardWidth()+"}",'g');
+			return new RegExp(".{1,"+this.getBoardWidth()*2+"}",'g');
 		};
 
 		this.getBoardHeight = function() {
@@ -92,7 +99,13 @@
     		do {
     			result = search.exec(source);
     			if(result !== null) {
-    				indices.push(result.index);
+    				if(result.index % 2 === 1 || result.index ===1) {
+    					if(indices.indexOf(result.index -1) === -1) {
+    						indices.push(result.index);
+    					}
+    				} else {
+    					indices.push(result.index);
+    				}
     			}
     		}while (result !== null);
     		return indices;
@@ -111,22 +124,19 @@
 			if(search === undefined) {
 				return this.getIndicesOf(key,where);
 			}
+
 			indices = this.getIndicesOf(key,where);
 			indices.forEach(function(index){
-				var tile = self.getPair(index),
-				tileData = null;
-				if(mapLegend[what].dataKey !== undefined) {
-					tileData = tile.match(mapLegend[what].dataKey)[0];
-					if(search !== undefined) {
-						//XXX Coercion, I don't care
-						if(tileData == search) {
-							result.push(index);
-						}
-					} else {
+				var tileData = this.getData(this.indexToPos(index));
+				if(search !== undefined) {
+					//XXX Coercion, I don't care
+					if(tileData == search) {
 						result.push(index);
 					}
+				} else {
+					result.push(index);
 				}
-			});
+			},this);
 			return result;
 		};
 
@@ -150,11 +160,12 @@
 		};
 
 		this.indexToPos = function(index) {
-			var x = parseInt(index/this.getBoardWidth(),10),
+			var x = parseInt(index/(this.getBoardWidth()*2),10),
 		 		y = parseInt(Math.ceil(index%this.getBoardWidth())/2,10);
 			return {
 				x:x,
-				y:y
+				y:y,
+				tile:this.getPair(index)
 			};
 		};
 
@@ -162,8 +173,29 @@
 			return this.find('tavern', this.getBoard().tiles);
 		};
 
+		this.getData = function(pos) {
+			var type = this.getTypeByPos(pos),
+				pair = this.getPair(this.posToIndex(pos));
+			if(type !== undefined) {
+				if(mapLegend[type].dataKey !== undefined) {
+					return pair.match(mapLegend[type].dataKey)[0];
+				}
+			}
+			return undefined;
+		};
+
+		this.addMineData = function(mine) {
+			var mineData = this.getData(mine);
+			if(mineData !== undefined) {
+				mine.owned = (mineData == this.getHero().id);
+				mine.neutral = (mineData == mapLegend.mine.emptyData);
+				mine.enemy = (!mine.owned && !mine.neutral);
+			}
+			return mine;
+		};
+
 		this.findMines = function(search) {
-			return this.find('mine', this.getBoard().tiles,search);
+			return this.find('mine', this.getBoard().tiles,search).map(this.addMineData,this);
 		};
 
 		this.findImpassable = function() {
@@ -190,10 +222,6 @@
 			return this.getState().game;
 		};
 
-		this.getHero = function() {
-			return this.getState().hero;
-		};
-
 		this.findOwnedMines = function() {
 			return this.findMines(this.getHero().id);
 		};
@@ -211,7 +239,9 @@
 		};
 
 		this.findEnemyMines = function() {
-			return _.difference(this.findMines(),this.findOwnedMines());
+			return this.findMines().filter(function(mine){
+				return !mine.owned;
+			});
 		};
 
 		this.updateState = function(state) {
@@ -222,7 +252,7 @@
 		};
 
 		this.update = function(state) {
-			return this.updateState();
+			return this.updateState(state);
 		};
 
 		this.getEnemies = function() {
@@ -242,7 +272,32 @@
 		};
 
 		this.getAttackValue = function() {
-			return 20;
+			return mapLegend.hero.attackValue;
+		};
+
+		this.getTavernCost = function() {
+			return mapLegend.tavern.goldCost;
+		};
+
+		this.getTavernHealAmount = function() {
+			return mapLegend.tavern.healAmount;
+		};
+
+		this.getMineDamage = function() {
+			return mapLegend.mine.combatCost;
+		};
+
+		/**
+		 * HEROES SHIZ
+		 */
+
+		this.getHero = function(id) {
+			if(id === undefined || id === this.getState().hero.id ) {
+				return this.getState().hero;
+			}
+			return this.getGame().heroes.find(function(hero){
+				return hero.id === id;
+			});
 		};
 
 		this.getHeroByPos = function(pos) {
@@ -257,6 +312,27 @@
 			}
 			return ret;
 		};
+
+		this.getHeroHealthPercentage = function(id) {
+			var hero = this.getHero(id);
+			if (hero !== undefined) {
+				return hero.life / this.getHeroMaxHealth();	
+			}
+			throw new Error("Unknown Hero");
+		};
+
+		this.getHeroHealth = function(id) {
+			var hero = this.getHero(id);
+			if (hero !== undefined) {
+				return hero.life;
+			}
+			throw new Error("Unknown Hero");
+		};
+
+		this.getHeroMaxHealth = function() {
+			return mapLegend.hero.maxHealth;
+		};
+
 			
 		this.buildNeighbour = function(x,y) {
 			var obj = {};
@@ -302,15 +378,6 @@
 			return res;
 		};
 
-
-		this.getCostForPoint = function(position) {
-			if(typeof position !== "object") {
-				throw new TypeError("Please only use position objects for getNeighbours");
-			}
-			return this.getTypeByPos(position).cost;
-			//var costs = this.getNeighboursForPoint(position).map()
-		};
-
 		this.getNeighbouringCosts = function(position) {
 			var cost = 0,
 				neighbours = this.getNeighbours(position),
@@ -325,6 +392,13 @@
 				}
 			}
 			return cost;
+		};
+
+		this.getCostForPoint = function(position) {
+			if(typeof position !== "object") {
+				throw new TypeError("Please only use position objects for getNeighbours");
+			}
+			return this.getTypeByPos(position).pathingCost;
 		};
 
 		this.getDistanceBetween = function(a,b) {
@@ -371,6 +445,32 @@
 				throw new TypeError("getTypeByPos takes a position object");
 			}
 			return this.getTypeByIndex(this.posToIndex(pos));
+		};
+
+		this.getNumberOfOwnedMines = function() {
+			return this.findOwnedMines().length;
+		};
+
+		this.getNumberOfEnemyMines = function() {
+			return this.findEnemyMines().length;
+		};
+
+		this.getMinePercentage = function() {
+			var owned = this.getNumberOfOwnedMines(),
+				enemy = this.getNumberOfEnemyMines();
+			if (owned < 0 && enemy < 0) {
+				if (owned === 0) {
+					return 0;
+				}
+				if (enemy === 0) {
+					return 1;
+				}
+			}
+			return owned / enemy;
+		};
+
+		this.comparePositions = function(a,b) {
+			return (a.x === b.x && a.y === b.y);
 		};
 
 

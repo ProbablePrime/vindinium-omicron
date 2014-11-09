@@ -3,7 +3,7 @@
 	var _ = require('lodash'),
 		PathFinder = function() {
 		var pathFinder = require('pathfinding'),
-			finder = new pathFinder.AStarFinder();
+			finder = new pathFinder.TraceFinder();
 		this.grid = null;
 
 		this.update = function(state) {
@@ -11,15 +11,19 @@
 			var walls = state.findImpassable();
 			walls.forEach(function(wall){
 				//XXX Our coord system sometimes durps and returns huge numbers
-				if(wall.y > state.getBoardWidth() || wall.x > state.getBoardHeight()) {
+				///if(wall.y < state.getBoardWidth() || wall.x < state.getBoardHeight()) {
 					//XXX Vindiniums coordinate system
+					//console.log(wall);
 					this.grid.setWalkableAt(wall.y, wall.x, false);
-				}
+				//}
 			},this);
+			//console.log(this.grid.nodes);
 		};
 
 		this.pathTo = function(source,sink) {
 			var pathGrid = this.grid.clone();
+			pathGrid.setWalkableAt(source.y,source.x,true);
+			pathGrid.setWalkableAt(sink.y,sink.x,true);
 			return finder.findPath(source.y,source.x,sink.y,sink.x, pathGrid);
 		};
 
@@ -50,7 +54,7 @@
 				return path[0];	
 			}
 			return null;
-		}
+		};
 
 		this.convertToDirection = function(current,previous) {
 			if (previous === null || previous === undefined) {

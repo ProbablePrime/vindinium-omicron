@@ -1,3 +1,49 @@
 {
-	
+	"identifier" : "idle", 
+	"strategy" : "prioritised",
+	"children" : [
+		{
+			"identifier" : "combat",
+			"test" : "inCombat",
+			"strategy" : "prioritised",
+			"children": [
+				{
+					"identifier": "fight"
+				},
+				{
+					"identifier": "run"
+				}
+			]
+		},
+		{
+			"identifier": "healthy",
+			"test": "isHealthy",
+			"strategy": "prioritised",
+			"children": [
+				{
+					"identifier": "mine",
+					"test": "shouldMine"
+				},
+				{
+					"identifier": "seekMine",
+					"test": "shouldSeekMine"
+				},
+				{
+					"identifier": "seekCombat",
+					"test": "shouldseekCombat"
+				}
+			]
+		},
+		{
+			"identifier": "unhealthy",
+			"test": "isUnHealthy",
+			"strategy": "prioritised",
+			"children" : [
+				{
+					"identifier": "drink",
+					"test": "shouldDrink"
+				}
+			]
+		}
+	]
 }

@@ -20,15 +20,14 @@
 		};
 
 		this.tick = function() {
-			while(!this.action.hasAction()) {
-				this.actor.brain.tick();
+			while(!this.actor.hasAction()) {
+				this.brain = this.brain.tick();
 			}
-			console.log(this.actor.state.identifier);
 			return this.actor.getAction(true);
 		};
 
 		this.buildBehaviours = function(jsonBehaviours) {
-			this.actor.brain = machine.generateTree(jsonBehaviours,this.actor,Actor.states);
+			this.brain = machine.generateTree(jsonBehaviours,this.actor,Actor.states);
 		};
 
 		this.buildBehaviours(behavioursTree);
