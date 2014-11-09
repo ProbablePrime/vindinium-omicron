@@ -13,11 +13,9 @@
 				//XXX Our coord system sometimes durps and returns huge numbers
 				///if(wall.y < state.getBoardWidth() || wall.x < state.getBoardHeight()) {
 					//XXX Vindiniums coordinate system
-					//console.log(wall);
 					this.grid.setWalkableAt(wall.y, wall.x, false);
 				//}
 			},this);
-			//console.log(this.grid.nodes);
 		};
 
 		this.pathTo = function(source,sink) {

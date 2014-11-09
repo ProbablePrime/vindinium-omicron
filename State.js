@@ -99,13 +99,7 @@
     		do {
     			result = search.exec(source);
     			if(result !== null) {
-    				if(result.index % 2 === 1 || result.index ===1) {
-    					if(indices.indexOf(result.index -1) === -1) {
-    						indices.push(result.index);
-    					}
-    				} else {
-    					indices.push(result.index);
-    				}
+					indices.push(result.index);
     			}
     		}while (result !== null);
     		return indices;
@@ -161,7 +155,7 @@
 
 		this.indexToPos = function(index) {
 			var x = parseInt(index/(this.getBoardWidth()*2),10),
-		 		y = parseInt(Math.ceil(index%this.getBoardWidth())/2,10);
+		 		y = parseInt(Math.ceil(index%(this.getBoardWidth()*2))/2,10);
 			return {
 				x:x,
 				y:y,
