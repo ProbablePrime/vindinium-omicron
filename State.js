@@ -289,7 +289,7 @@
 		 * HEROES SHIZ
 		 */
 		this.getHeroes = function() {
-			return this.getGame().heroes;
+			return this.getPlayers();
 		}
 		this.getHero = function(id) {
 			if(id === undefined || id === this.getState().hero.id ) {
