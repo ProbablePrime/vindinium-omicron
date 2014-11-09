@@ -115,22 +115,23 @@
 			for (neigbour in neighbours) {
 				if(neighbours.hasOwnProperty(neigbour)) {
 					neigbourObj = neighbours[neigbour];
-					if(neigbourObj.type === 'hero') {
-						predictedDamage = predictedDamage + this.state.getAttackValue();
+					if(neigbourObj.type !== 'hero') {
+						continue;
 					}
-					if(predictedDamage >= this.state.getHeroHealth()) {
-						console.log('We are going to die :(');
-						return false;
-					}
-					if(predictedDamage >= this.state.getHeroHealth()/2) {
-						console.log('Dumb fight we should run');
-						return false;
-					}
+					predictedDamage = predictedDamage + this.state.getAttackValue();
 					if(this.state.getAttackValue() >= neigbourObj.hero.life) {
 						console.log(neigbourObj.hero.name + ' will most likely die at our hands');
 						worthIt = true;
 					}
 				}
+			}
+			if(predictedDamage >= this.state.getHeroHealth()) {
+				console.log('We are going to die :(');
+				return false;
+			}
+			if(predictedDamage >= this.state.getHeroHealth()/2) {
+				console.log('Dumb fight we should run');
+				return false;
 			}
 			return worthIt;
 		},
@@ -252,9 +253,18 @@
 					return false;
 				}
 
-				var tavernCheck = this.state.getNeighboursForPoint(hero.pos).some(function(point){
-					return point.type === 'tavern';
-				},this);
+				var tavernCheck = this.state.getNeighboursForPoint(hero.pos),
+					currentNeighbour = null;
+				for(currentNeighbour in tavernCheck) {
+					if(tavernCheck.hasOwnProperty(currentNeighbour)) {
+						if(typeof currentNeighbour !== "object") {
+							currentNeighbour = currentNeighbour[tavernCheck];
+						}
+						if(currentNeighbour.type === "tavern") {
+							return false;
+						}
+					}
+				}
 
 				if (tavernCheck) {
 					return false;
