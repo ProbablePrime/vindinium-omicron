@@ -3,14 +3,16 @@ var vindinium = require('vindinium-client');
 var State = require('./State');
 var Director = require('./Director');
 
-var parsedState = new State();
-var director = new Director('default');
-
-var config = require('./config.json');
-var currentID = null;
-
 var exec = require('child_process').exec;
 
+var config = require('./config.json');
+
+
+var director = new Director(config.brain || 'default');
+
+var parsedState = new State(config);
+
+var currentID = null;
 
 var openTab = function(state) {
 	"use strict";
@@ -47,7 +49,7 @@ var handeler = function(state,cb) {
 	director.update(parsedState);
 	var action = director.tick();
 	if(action !== undefined && action !== null) {
-		console.log('sending action to server' + action);
+		console.log('sending action to server ' + action);
 		cb(null,convertDirection(action));
 	} else {
 		//Suicide but meh
