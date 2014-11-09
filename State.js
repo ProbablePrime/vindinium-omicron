@@ -419,7 +419,7 @@
 			var match = tiles[0];
 			match.distance = this.getDistanceBetween(from,match);
 			tiles.forEach(function(tile){
-				if(tile.distance === null) {
+				if(tile.distance === null || tile.distance === undefined) {
 					tile.distance = this.getDistanceBetween(from,tile);
 				}
 				if(tile.distance < match.distance) {
