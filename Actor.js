@@ -206,6 +206,9 @@
 			return Actor.states.mine.call(this);
 		},
 		shouldSeekMine: function() {
+			if(!Actor.states.isHealthy.call(this)) {
+				return false;
+			}
 			var closestMine = this.state.findClosest(this.state.getHero().pos,this.state.findEnemyMines());
 			if (closestMine === undefined) {
 				console.log('We cant find a mine so we cant seek one');
@@ -226,6 +229,9 @@
 
 		},
 		shouldSeekCombat: function() {
+			if(!Actor.states.isHealthy.call(this)) {
+				return false;
+			}
 			if(this.getHeroHealthPercentage() < 0.6) {
 				return false;
 			}
@@ -233,7 +239,7 @@
 		},
 		seekCombat: function() {
 			var isWorthIt = function(hero) {
-				if(hero.id === this.getHero().id ) {
+				if(hero.id === this.state.getHero().id ) {
 					return false;
 				}
 				if(hero.crashed) {
