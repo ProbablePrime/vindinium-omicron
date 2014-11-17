@@ -6,6 +6,8 @@
 	Director = function(brain) {
 		var machine = new Machine();			
 		this.actor = new Actor();
+		this.chances = 10;
+		this.attempts = 0;
 		//node allows us to just load in json files which is awesome
 		behavioursTree = require('./brains/' + brain + '.json');
 		
@@ -21,8 +23,15 @@
 
 		this.tick = function() {
 			while(!this.actor.hasAction()) {
+				if (this.attempts >= this.chances) {
+					this.attempts = 0;
+					console.log('I guess we are stuck');
+					this.brain = this.brain.warp("idle");
+				}
 				this.brain = this.brain.tick();
+				this.attempts += 1;
 			}
+			this.attempts = 0;
 			return this.actor.getAction(true);
 		};
 
