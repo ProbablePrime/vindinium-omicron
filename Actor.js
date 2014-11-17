@@ -43,6 +43,49 @@
 			return true;
 		};
 
+		this.canSurviveJourney = function(distance) {
+			if(distance === undefined) {
+				return true;
+			}
+			var cost = this.state.getTotalThirst(distance);
+			if ((this.state.getHeroHealth() - cost) > this.getHealthyPercentage()) {
+				return true;
+			}
+		};
+
+		this.getHealthyPercentage = function() {
+			return 0.6;
+		};
+
+		this.isTargetWorthIt = function(hero) {
+			if(hero.id === this.state.getHero().id ) {
+					return false;
+			}
+			if(hero.crashed) {
+				return true;
+			}
+			if(this.state.comparePositions(hero.pos,hero.spawnPos)) {
+				return false;
+			}
+			if(this.state.getHeroHealthPercentage(hero.id) > this.state.getHeroHealthPercentage()) {
+				return false;
+			}
+
+			var tavernCheck = this.state.getNeighboursForPoint(hero.pos),
+				currentNeighbour = null;
+			for(currentNeighbour in tavernCheck) {
+				if(tavernCheck.hasOwnProperty(currentNeighbour)) {
+					currentNeighbour = tavernCheck[currentNeighbour];
+					console.log('neighbour is');
+					console.log(currentNeighbour);
+					if(currentNeighbour.type === "tavern") {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
+
 		return this;
 	};
 
@@ -54,6 +97,7 @@
 		drink: function() {
 			var closestTavern,
 				direction;
+			console.log('Going for a drink');
 			//alright let's drink
 			closestTavern = this.state.findClosest(this.state.getHero().pos,this.state.findTaverns());
 			if(typeof closestTavern === "object") {
@@ -62,7 +106,9 @@
 					this.setAction(direction);	
 					return true;
 				}
+				console.log('We couldnt route to the tavern');
 			}
+			console.log('We couldnt find a tavern');
 			return false;
 		},
 		/**
@@ -77,6 +123,9 @@
 			}
 			var closestTavern = this.state.findClosest(this.state.getHero().pos,this.state.findTaverns());
 			if(closestTavern !== undefined) {
+				if (!this.canSurviveJourney(closestTavern.distance)) {
+					console.log('This is going to be tricky');
+				}
 				if ( (this.state.getTavernHealAmount()+this.state.getHeroHealth())/this.state.getHeroMaxHealth() <= 1.1 ) {
 					console.log('we could do with a heal');
 					return true;
@@ -90,8 +139,16 @@
 			return false;
 		},
 
+		shouldDrinkAnyway: function() {
+			return true;
+		},
+
+		drinkAnyway: function() {
+			return Actor.states.drink.call(this);
+		},
+
 		isHealthy:function() {
-			return (this.state.getHeroHealthPercentage() > 0.6);
+			return (this.state.getHeroHealthPercentage() > this.getHealthyPercentage());
 		},
 		healthy: function() {
 			return true;
@@ -100,7 +157,7 @@
 			return !Actor.states.isHealthy.call(this);
 		},
 		unHealthy: function() {
-
+			return true;
 		},
 		/**
 		 * Workout if we are in a suitable position and state to fight
@@ -112,6 +169,11 @@
 				neigbourObj = null,
 				predictedDamage = 0,
 				worthIt = false;
+			console.log('Should we fight');
+			if(!Actor.states.inCombat.call(this)) {
+				console.log('We are not in combat');
+				return false;
+			}
 			for (neigbour in neighbours) {
 				if(neighbours.hasOwnProperty(neigbour)) {
 					neigbourObj = neighbours[neigbour];
@@ -133,6 +195,8 @@
 				console.log('Dumb fight we should run');
 				return false;
 			}
+			console.log('Why are we fighting');
+			console.log(worthIt);
 			return worthIt;
 		},
 		fight: function() {
@@ -140,11 +204,36 @@
 			return true;
 		},
 
-		shouldRun: function() {			
+		shouldRun: function() {
+			console.log('We are going to die :(');
 			return !Actor.states.shouldFight.call(this);
 		},
 		run: function() {
-			return Actor.states.drink.call(this);
+			//TODO check for location near pub and if close, no point routing to one. Run anyway.
+			if(Actor.states.drink.call(this)) {
+				return true;
+			}
+			console.log('We couldnt route to a pub so we are going to back away slowely');
+			var neighbours = this.state.getNeighbours(this.state.getHero().pos),
+				neighbour = null,
+				neigbourObj = null,
+				invertedNeighbour = null;
+			for (neighbour in neighbours) {
+				if(neighbours.hasOwnProperty(neighbour)) {
+					neigbourObj = neighbours[neighbour];
+					if(neigbourObj.type === 'hero') {
+						invertedNeighbour = neighbours[this.state.invertDirection(neighbour)];
+						if(invertedNeighbour.type !== 'hero' && invertedNeighbour.passable) {
+							console.log('found our next step to run away');
+							this.setAction(this.state.invertDirection(neighbour));
+							return true;
+						}
+					}
+				}
+			}
+			console.log('we are surrounded I guess');
+			this.setAction('STAY');
+			return true;
 		},
 		inCombat: function() {
 			var neighbours = this.state.getNeighboursForPoint(this.state.getHero().pos),
@@ -172,7 +261,11 @@
 				return false;
 			}
 
-			if(closestMine.owned) {
+			if (!this.canSurviveJourney(closestMine.distance)) {
+				return false;
+			}
+
+			if (closestMine.owned) {
 				return false;
 			}
 
@@ -180,12 +273,10 @@
 				return false;
 			}
 
-			if(closestMine.distance <= 3) {
+			if (closestMine.distance <= 3) {
 				return true;
 			}
 
-
-				
 			return false;
 		},
 		mine:function() {
@@ -197,11 +288,14 @@
 			console.log('the mine is at ');
 			console.log(closestMine);
 			direction = finder.firstDirectionTo(this.state.getHero().pos,closestMine);
-
+			console.log('And the direction is');
+			console.log(direction);
 			if(direction !== undefined) {
 				this.setAction(direction);	
 				return true;
-			}
+			} 
+			console.log('Cannot route to mine');
+			return false;
 		},
 		seekMine: function() {
 			return Actor.states.mine.call(this);
@@ -214,8 +308,13 @@
 			if (closestMine === undefined) {
 				console.log('We cant find a mine so we cant seek one');
 				return false;
-
 			}
+
+			if (!this.canSurviveJourney(closestMine.distance)) {
+				console.log('we cant survive a trip to this mine');
+				return false;
+			}
+
 			if (closestMine.enemy) {
 				if (!this.canSurviveMineTakeover()) {
 					console.log('we cant survive the takeover of the mine');
@@ -233,62 +332,36 @@
 			if(!Actor.states.isHealthy.call(this)) {
 				return false;
 			}
-			if(this.getHeroHealthPercentage() < 0.6) {
+
+			if(this.state.getHeroHealthPercentage() < 0.6) {
 				return false;
 			}
-			return true;
+			var targets = this.state.getHeroes().filter(this.isTargetWorthIt,this);
+			if(targets.length > 0) {
+				return true;
+			}
+			console.log('no targets were worth it');
+			return false;
 		},
 		seekCombat: function() {
-			var isWorthIt = function(hero) {
-				if(hero.id === this.state.getHero().id ) {
-					return false;
-				}
-				if(hero.crashed) {
-					return true;
-				}
-				if(this.state.comparePositions(hero.pos,hero.spawnPos)) {
-					return false;
-				}
-				if(this.state.getHeroHealthPercentage(hero.id) > this.state.getHeroHealthPercentage()) {
-					return false;
-				}
-
-				var tavernCheck = this.state.getNeighboursForPoint(hero.pos),
-					currentNeighbour = null;
-				for(currentNeighbour in tavernCheck) {
-					if(tavernCheck.hasOwnProperty(currentNeighbour)) {
-						if(typeof currentNeighbour !== "object") {
-							currentNeighbour = currentNeighbour[tavernCheck];
-						}
-						if(currentNeighbour.type === "tavern") {
-							return false;
-						}
-					}
-				}
-
-				if (tavernCheck) {
-					return false;
-				}
-			},
-			targets = this.state.getHeroes().filter(isWorthIt,this),
-			distance = 999,
+			var targets = this.state.getHeroes().filter(this.isTargetWorthIt,this),
 			target = null,
 			direction = null;
 
 			if(targets.length === 0) {
+				console.log('no targets were worth it');
 				return false;
 			}
 
-			target.forEach( 
-				function(searchTarget){
-					if(this.state.getDistanceBetween(target.pos,this.getHero().pos) < distance) {
-						target = searchTarget;
-					}
-				},
-				this
-			);
+			target = target.findClosest(this.state.getHero().pos,targets);
+
+			if(!this.canSurviveJourney(target.distance)) {
+				console.log('Cant survive journey to next target');
+				return false;
+			}
 			
 			if(target === null) {
+				console.log('couldnt find optimum target');
 				return false;
 			}
 
