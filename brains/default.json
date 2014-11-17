@@ -8,10 +8,12 @@
 			"strategy" : "prioritised",
 			"children": [
 				{
-					"identifier": "fight"
+					"identifier": "fight",
+					"test":"shouldFight"
 				},
 				{
-					"identifier": "run"
+					"identifier": "run",
+					"test":"shouldRun"
 				}
 			]
 		},
@@ -31,6 +33,10 @@
 				{
 					"identifier": "seekCombat",
 					"test": "shouldseekCombat"
+				},
+				{
+					"identifier": "drinkAnyway",
+					"test":"shouldDrinkAnyway"
 				}
 			]
 		},
