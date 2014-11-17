@@ -35,7 +35,8 @@
 				value:2,
 				pathingCost:4,
 				attackValue:20,
-				maxHealth:100
+				maxHealth:100,
+				healthPerTurn: 1
 			},
 			tavern: {
 				key: new RegExp('(\\[\\])',"g"),
@@ -62,7 +63,16 @@
 		this.state = null;
 		this.previousState = null;
 
-		
+		this.getThirst = function() {
+			return mapLegend.hero.healthPerTurn;
+		};
+
+		this.getTotalThirst = function(distance) {
+			if(distance === undefined) {
+				return 0;
+			}
+			return distance * this.getThirst();
+		};
 
 		this.getPercentageDone = function() {
 			return (this.getState().game.turn/this.state.game.maxTurns) * 100;
@@ -290,7 +300,8 @@
 		 */
 		this.getHeroes = function() {
 			return this.getPlayers();
-		}
+		};
+
 		this.getHero = function(id) {
 			if(id === undefined || id === this.getState().hero.id ) {
 				return this.getState().hero;
@@ -333,12 +344,19 @@
 			return mapLegend.hero.maxHealth;
 		};
 
+		this.getPassableByType = function(type) {
+			if(mapLegend[type] === undefined) {
+				return true;
+			}
+			return mapLegend[type].pass;
+		};
 			
 		this.buildNeighbour = function(x,y) {
 			var obj = {};
 			obj.x = x;
 			obj.y = y;
 			obj.type = this.getTypeByPos(obj);
+			obj.passable = this.getPassableByType(obj.type);
 			obj.tile = this.getPairByPos(obj);
 			if(obj.type === 'hero') {
 				obj.hero = this.getHeroByPos(obj);
