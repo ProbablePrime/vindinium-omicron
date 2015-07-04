@@ -37,7 +37,8 @@
 		};
 
 		this.canSurviveMineTakeover = function() {
-			if ( (this.state.getHeroHealth() - this.state.getMineDamage())/this.state.getHeroMaxHealth() <=0.3 ) {
+			var hero = this.state.getHero()
+			if ( (hero.getHealth() - this.state.getMineDamage())/hero.getHeroMaxHealth() <=0.3 ) {
 				return false;
 			}
 			return true;
@@ -48,7 +49,8 @@
 				return true;
 			}
 			var cost = this.state.getTotalThirst(distance);
-			if ((this.state.getHeroHealth() - cost) > this.getHealthyPercentage()) {
+			var hero = this.state.getHero();
+			if ((hero.getHealth() - cost) > this.getHealthyPercentage()) {
 				return true;
 			}
 		};
@@ -57,21 +59,23 @@
 			return 0.6;
 		};
 
-		this.isTargetWorthIt = function(hero) {
-			if(hero.id === this.state.getHero().id ) {
+		this.isTargetWorthIt = function(target) {
+			var hero = this.state.getHero();
+			if (target.getID() === hero.getID() ) {
 					return false;
 			}
-			if(hero.crashed) {
+			if (target.isCrashed()) {
 				return true;
 			}
-			if(this.state.comparePositions(hero.pos,hero.spawnPos)) {
+			//If they are on their spawn point then they are basically a tank. If we kill them the'll just respawn and whack us again.
+			if (this.state.comparePositions(target.getPos(),target.getSpawnPos())) {
 				return false;
 			}
-			if(this.state.getHeroHealthPercentage(hero.id) > this.state.getHeroHealthPercentage()) {
+			if(target.getHealthPercentage() > hero.getHealthPercentage()) {
 				return false;
 			}
 
-			var tavernCheck = this.state.getNeighboursForPoint(hero.pos),
+			var tavernCheck = this.state.getNeighboursForPoint(target.getPos()),
 				currentNeighbour = null;
 			for(currentNeighbour in tavernCheck) {
 				if(tavernCheck.hasOwnProperty(currentNeighbour)) {
@@ -99,9 +103,9 @@
 				direction;
 			console.log('Going for a drink');
 			//alright let's drink
-			closestTavern = this.state.findClosest(this.state.getHero().pos,this.state.findTaverns());
+			closestTavern = this.state.findClosest(this.state.getHero().getPos(),this.state.findTaverns());
 			if(typeof closestTavern === "object") {
-				direction = finder.firstDirectionTo(this.state.getHero().pos,closestTavern);
+				direction = finder.firstDirectionTo(this.state.getHero().getPos(),closestTavern);
 				if(direction !== undefined) {
 					this.setAction(direction);	
 					return true;
@@ -116,21 +120,21 @@
 		 * @return {boolean} 
 		 */
 		shouldDrink: function() {
-
-			if(this.state.getHero().gold < this.state.getTavernCost()) {
+			var hero = this.state.getHero();
+			if(hero.getGold() < this.state.getTavernCost()) {
 				console.log('We cannot afford a tavern');
 				return false;
 			}
-			var closestTavern = this.state.findClosest(this.state.getHero().pos,this.state.findTaverns());
+			var closestTavern = this.state.findClosest(hero.getPos(),this.state.findTaverns());
 			if(closestTavern !== undefined) {
 				if (!this.canSurviveJourney(closestTavern.distance)) {
 					console.log('This is going to be tricky');
 				}
-				if ( (this.state.getTavernHealAmount()+this.state.getHeroHealth())/this.state.getHeroMaxHealth() <= 1.1 ) {
+				if ( (this.state.getTavernHealAmount()+hero.getHealthPercentage())/hero.getMaxHealth() <= 1.1 ) {
 					console.log('we could do with a heal');
 					return true;
 				}
-				if ( closestTavern.distance === 1 && this.state.getHeroHealthPercentage() < 0.7 ) {
+				if ( closestTavern.distance === 1 && hero.getHealthPercentage() < 0.7 ) {
 					console.log('we are close enough and not max health so lets heal');
 					return true;
 				}
@@ -148,7 +152,7 @@
 		},
 
 		isHealthy:function() {
-			return (this.state.getHeroHealthPercentage() > this.getHealthyPercentage());
+			return (this.state.getHero().getHealthPercentage() > this.getHealthyPercentage());
 		},
 		healthy: function() {
 			return true;
@@ -164,6 +168,7 @@
 		 * @return {boolean} decision
 		 */
 		shouldFight: function() {
+			var hero = this.state.getHero();
 			var neighbours = this.state.getNeighboursForPoint(this.state.getHero().pos),
 				neigbour = null,
 				neigbourObj = null,
@@ -336,7 +341,7 @@
 			if(this.state.getHeroHealthPercentage() < 0.6) {
 				return false;
 			}
-			var targets = this.state.getHeroes().filter(this.isTargetWorthIt,this);
+			var targets = this.state.getEnemies().filter(this.isTargetWorthIt,this);
 			if(targets.length > 0) {
 				return true;
 			}
@@ -344,7 +349,7 @@
 			return false;
 		},
 		seekCombat: function() {
-			var targets = this.state.getHeroes().filter(this.isTargetWorthIt,this),
+			var targets = this.state.getEnemies().filter(this.isTargetWorthIt,this),
 			target = null,
 			direction = null;
 

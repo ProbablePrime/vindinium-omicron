@@ -39,6 +39,18 @@
 			return this.id;
 		};
 
+		this.isCrashed = function() {
+			return this.crashed;
+		}
+
+		this.getSpawnPos = function() {
+			return this.spawnPos;
+		};
+
+		this.getGold = function() {
+			return this.gold;
+		}
+
 	};
 	exports = module.exports = Hero;
 }(exports,module));
