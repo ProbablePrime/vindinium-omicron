@@ -1,6 +1,7 @@
 (function(exports,module) {
 	"use strict";
 	var _ = require('lodash'),
+		Hero = require('./state/Hero.js'),
 		heuristics = require('./Heuristics.js'),
 		State  = function(config) {
 		this.config = config;
@@ -33,10 +34,7 @@
 				interact:true,
 				dataKey: new RegExp("[1-4]{1}"),
 				value:2,
-				pathingCost:4,
-				attackValue:20,
-				maxHealth:100,
-				healthPerTurn: 1
+				pathingCost:4
 			},
 			tavern: {
 				key: new RegExp('(\\[\\])',"g"),
@@ -58,7 +56,9 @@
 				combatCost:20
 			}
 		},		
-		charactersPerSpace = 2;
+		charactersPerSpace = 2,
+		heroes = [],
+		hero = [];
 
 		this.state = null;
 		this.previousState = null;
@@ -106,15 +106,15 @@
 		};
 
 		this.getIndicesOf = function(search, source) {
-    		var indices = [],
-    			result = null;
-    		do {
-    			result = search.exec(source);
-    			if(result !== null) {
+			var indices = [],
+				result = null;
+			do {
+				result = search.exec(source);
+				if(result !== null) {
 					indices.push(result.index);
-    			}
-    		}while (result !== null);
-    		return indices;
+				}
+			}while (result !== null);
+			return indices;
 		};
 
 		this.findIndicies = function(what,where,search) {
@@ -252,20 +252,28 @@
 			});
 		};
 
+		this.generateObjs = function() {
+			this.hero = new Hero(this.getState().hero);
+			this.getGame().heroes.forEach(function(heroObj){
+				this.heroes.push(new Hero(heroObj));
+			});
+		};
+
 		this.updateState = function(state) {
 			this.previousState = this.state;
 			this.state = state;
-
 			return this;
 		};
 
 		this.update = function(state) {
-			return this.updateState(state);
+			this.generateObjs();
+			this.updateState(state);
+			return this;
 		};
 
 		this.getEnemies = function() {
 			return this.getPlayers().filter(function(player){
-				return player.id !== this.getHero().id;
+				return player.getID() !== this.getHero().getID();
 			});
 		};
 
@@ -276,7 +284,7 @@
 		};
 
 		this.getPlayers = function() {
-			return this.getGame().heroes;
+			return this.getHeroes();
 		};
 
 		this.getAttackValue = function() {
@@ -299,50 +307,37 @@
 		 * HEROES SHIZ
 		 */
 		this.getHeroes = function() {
-			return this.getPlayers();
+			return this.heroes;
 		};
 
 		this.getHero = function(id) {
-			if(id === undefined || id === this.getState().hero.id ) {
-				return this.getState().hero;
+			if(id === undefined || id === this.hero.id ) {
+				return this.hero;
 			}
-			return this.getGame().heroes.find(function(hero){
+			return this.getHeros().find(function(hero){
 				return hero.id === id;
 			});
 		};
 
 		this.getHeroByPos = function(pos) {
-			var players = this.getPlayers(),
+			var players = heroes,
 			ret = players.find(
 				function(player)	{
 					return (player.pos.x === pos.x && player.pos.y === pos.y);
 				}
 			);
+			
 			if(ret === undefined) {
 				return null;
+			}
+
+			if(ret.getID() === this.getHero().getID()) {
+				return this.getHero();
 			}
 			return ret;
 		};
 
-		this.getHeroHealthPercentage = function(id) {
-			var hero = this.getHero(id);
-			if (hero !== undefined) {
-				return hero.life / this.getHeroMaxHealth();	
-			}
-			throw new Error("Unknown Hero");
-		};
-
-		this.getHeroHealth = function(id) {
-			var hero = this.getHero(id);
-			if (hero !== undefined) {
-				return hero.life;
-			}
-			throw new Error("Unknown Hero");
-		};
-
-		this.getHeroMaxHealth = function() {
-			return mapLegend.hero.maxHealth;
-		};
+		
 
 		this.getPassableByType = function(type) {
 			if(mapLegend[type] === undefined) {
