@@ -253,10 +253,10 @@
 		};
 
 		this.generateObjs = function() {
-			this.hero = new Hero(this.getState().hero);
+			hero = new Hero(this.getState().hero);
 			this.getGame().heroes.forEach(function(heroObj){
-				this.heroes.push(new Hero(heroObj));
-			});
+				heroes.push(new Hero(heroObj));
+			},this);
 		};
 
 		this.updateState = function(state) {
@@ -266,8 +266,8 @@
 		};
 
 		this.update = function(state) {
-			this.generateObjs();
 			this.updateState(state);
+			this.generateObjs();
 			return this;
 		};
 
@@ -307,12 +307,12 @@
 		 * HEROES SHIZ
 		 */
 		this.getHeroes = function() {
-			return this.heroes;
+			return heroes;
 		};
 
 		this.getHero = function(id) {
-			if(id === undefined || id === this.hero.id ) {
-				return this.hero;
+			if(id === undefined || id === hero.id ) {
+				return hero;
 			}
 			return this.getHeros().find(function(hero){
 				return hero.id === id;

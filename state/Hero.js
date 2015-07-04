@@ -11,7 +11,7 @@
 		this.attackValue = 20;
 
 		var hero = this;
-		this.getHeroHealthPercentage = function(id) {
+		this.getHealthPercentage = function(id) {
 			return this.life / this.getMaxHealth();	
 		};
 
